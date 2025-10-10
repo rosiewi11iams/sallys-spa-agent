@@ -1,0 +1,48 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Lambda dependencies (installed by build.sh)
+lambda-chat/*
+!lambda-chat/lambda_function.py
+!lambda-chat/requirements.txt
+lambda-mcp/*
+!lambda-mcp/lambda_function.py
+!lambda-mcp/requirements.txt
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+terraform.tfvars
+
+# Environment variables
+.env
+
+# Lambda packages (generated artifacts)
+lambda-packages/
+*.zip
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+terraform/test.py~

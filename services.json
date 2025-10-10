@@ -1,0 +1,44 @@
+{
+  "services": [
+    {
+      "name": "Manicure",
+      "duration": "45 min",
+      "price": 35.00
+    },
+    {
+      "name": "Pedicure",
+      "duration": "60 min",
+      "price": 50.00
+    },
+    {
+      "name": "Gel Nails",
+      "duration": "60 min",
+      "price": 55.00
+    },
+    {
+      "name": "Blowout",
+      "duration": "30 min",
+      "price": 45.00
+    },
+    {
+      "name": "Haircut",
+      "duration": "45 min",
+      "price": 65.00
+    },
+    {
+      "name": "Hair Color",
+      "duration": "120 min",
+      "price": 150.00
+    },
+    {
+      "name": "Facial",
+      "duration": "60 min",
+      "price": 85.00
+    },
+    {
+      "name": "Massage",
+      "duration": "60 min",
+      "price": 95.00
+    }
+  ]
+}
