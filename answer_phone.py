@@ -15,5 +15,5 @@ def home():
     return "Voice agent is running!"
 
 if __name__ == "__main__":
-    print("Starting Flask app on port 5000...")
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    print("Starting Flask app on port 5005...")
+    app.run(debug=True, port=5005, host='0.0.0.0')
