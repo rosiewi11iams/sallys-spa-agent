@@ -142,11 +142,32 @@ resource "aws_lambda_function" "chat_handler" {
   source_code_hash = filebase64sha256("../lambda-packages/chat-lambda.zip")
 }
 
+# Voice Lambda Function
+resource "aws_lambda_function" "voice_handler" {
+  filename      = "../lambda-packages/voice-lambda.zip"
+  function_name = "spa-voice-handler"
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.11"
+  timeout       = 60
+  memory_size   = 512
+
+  environment {
+    variables = {
+      ANTHROPIC_API_KEY   = var.anthropic_api_key
+      MCP_LAMBDA_NAME     = aws_lambda_function.mcp_tools.function_name
+      CONVERSATIONS_TABLE = aws_dynamodb_table.conversations.name
+    }
+  }
+
+  source_code_hash = filebase64sha256("../lambda-packages/voice-lambda.zip")
+}
+
 # API Gateway
 resource "aws_apigatewayv2_api" "spa_api" {
   name          = "spa-chat-api"
   protocol_type = "HTTP"
-  
+
   cors_configuration {
     allow_origins = ["*"]
     allow_methods = ["POST", "OPTIONS"]
@@ -169,6 +190,33 @@ resource "aws_apigatewayv2_route" "chat_route" {
   target    = "integrations/${aws_apigatewayv2_integration.chat_integration.id}"
 }
 
+# Integration with Voice Lambda
+resource "aws_apigatewayv2_integration" "voice_integration" {
+  api_id             = aws_apigatewayv2_api.spa_api.id
+  integration_type   = "AWS_PROXY"
+  integration_uri    = aws_lambda_function.voice_handler.invoke_arn
+  payload_format_version = "1.0"
+}
+
+# Voice routes
+resource "aws_apigatewayv2_route" "voice_incoming" {
+  api_id    = aws_apigatewayv2_api.spa_api.id
+  route_key = "POST /voice/incoming"
+  target    = "integrations/${aws_apigatewayv2_integration.voice_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "voice_gather" {
+  api_id    = aws_apigatewayv2_api.spa_api.id
+  route_key = "POST /voice/gather"
+  target    = "integrations/${aws_apigatewayv2_integration.voice_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "voice_process" {
+  api_id    = aws_apigatewayv2_api.spa_api.id
+  route_key = "POST /voice/process"
+  target    = "integrations/${aws_apigatewayv2_integration.voice_integration.id}"
+}
+
 # Default stage
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.spa_api.id
@@ -185,6 +233,14 @@ resource "aws_lambda_permission" "api_gateway_chat" {
   source_arn    = "${aws_apigatewayv2_api.spa_api.execution_arn}/*/*"
 }
 
+resource "aws_lambda_permission" "api_gateway_voice" {
+  statement_id  = "AllowAPIGatewayInvokeVoice"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.voice_handler.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.spa_api.execution_arn}/*/*"
+}
+
 # Outputs
 output "api_endpoint" {
   value = "${aws_apigatewayv2_api.spa_api.api_endpoint}/chat"
@@ -195,10 +251,27 @@ output "s3_bucket" {
   value = aws_s3_bucket.spa_data.id
 }
 
+output "voice_endpoint" {
+  value = "${aws_apigatewayv2_api.spa_api.api_endpoint}/voice/incoming"
+  description = "Voice webhook endpoint for Twilio"
+}
+
 output "test_curl_command" {
   value = <<EOT
 curl -X POST ${aws_apigatewayv2_api.spa_api.api_endpoint}/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "What services do you have?", "session_id": "test-123"}'
+EOT
+}
+
+output "twilio_setup_instructions" {
+  value = <<EOT
+Configure Twilio webhook:
+1. Go to Twilio Console > Phone Numbers
+2. Select your phone number
+3. Under Voice Configuration:
+   - A CALL COMES IN: Webhook
+   - URL: ${aws_apigatewayv2_api.spa_api.api_endpoint}/voice/incoming
+   - HTTP: POST
 EOT
 }
