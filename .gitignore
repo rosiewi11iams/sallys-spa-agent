@@ -18,6 +18,9 @@ lambda-chat/*
 lambda-mcp/*
 !lambda-mcp/lambda_function.py
 !lambda-mcp/requirements.txt
+lambda-voice/*
+!lambda-voice/lambda_function.py
+!lambda-voice/requirements.txt
 
 # Terraform
 .terraform/
